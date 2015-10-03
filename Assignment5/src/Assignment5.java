@@ -10,11 +10,10 @@ public class Assignment5
    {
       char[] value = {'A', '2', '3', '4', '5', '6', '7', '8', '9', 'T',
                       'J', 'Q', 'K', 'X'};
-      char[] suit = {'C', 'H', 'S', 'D'};
+      char[] suit = {'C', 'D', 'H', 'S'};
       String fileName = "";
-      int cardCount = 1;
+      int cardCount = 0;
       
-      icon[0] = new ImageIcon("images/BK.gif");
       for (int i = 0; i < 4; i++)
          for (int j = 0; j < 14; j++, cardCount++)
          {
@@ -22,15 +21,33 @@ public class Assignment5
             fileName += String.valueOf(value[j]) + String.valueOf(suit[i])
                + ".gif";
             icon[cardCount] = new ImageIcon("images/" + fileName);
-            System.out.println(fileName);
          }
+      icon[cardCount] = new ImageIcon("images/BK.gif");
          
    }
    
    public static void main(String[] args)
-      {
-        loadCardIcons();
+   {
+      JLabel[] cardLabel = new JLabel[NUM_CARD_IMAGES];
 
-      }//end main
+      loadCardIcons();
+      
+      JFrame frmMyWindow = new JFrame("Card Room");
+      frmMyWindow.setSize(1150, 650);
+      frmMyWindow.setLocationRelativeTo(null);
+      frmMyWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      
+      // set up layout which will control placement of buttons, etc.
+      FlowLayout layout = new FlowLayout(FlowLayout.CENTER, 5, 20);   
+      frmMyWindow.setLayout(layout);
+      
+      for (int i = 0; i < NUM_CARD_IMAGES; i++)
+         cardLabel[i] = new JLabel(icon[i]);
+      
+      for (int i = 0; i < NUM_CARD_IMAGES; i++)
+         frmMyWindow.add(cardLabel[i]);
+
+      frmMyWindow.setVisible(true);
+   }//end main
 
 }
