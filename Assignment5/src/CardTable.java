@@ -38,4 +38,32 @@ public class CardTable extends JFrame
    {
       return numPlayers;
    }//end accessors
+   
+      
+   private static class GUICard
+   {
+      private static Icon[][] iconCards = new ImageIcon[14][4]; 
+      private static Icon iconBack;
+      static boolean iconsLoaded = false;
+      
+
+      static void loadCardIcons()
+      {
+         char[] value = {'A', '2', '3', '4', '5', '6', '7', '8', '9', 'T',
+                         'J', 'Q', 'K', 'X'};
+         char[] suit = {'C', 'D', 'H', 'S'};
+         String fileName = "";
+         
+         for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 14; j++)
+            {
+               fileName = "";
+               fileName += String.valueOf(value[j]) + String.valueOf(suit[i])
+                  + ".gif";
+               iconCards[i][j] = new ImageIcon("images/" + fileName);
+            }
+         iconBack = new ImageIcon("images/BK.gif");
+         iconsLoaded = true;
+      }
+    }
 }
