@@ -1,7 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class Assignment5
+public class Assignment5A
 {
    public static final int NUM_CARD_IMAGES = 57;
    public static Icon[] icon = new ImageIcon[NUM_CARD_IMAGES];
@@ -22,6 +22,7 @@ public class Assignment5
                + ".gif";
             icon[cardCount] = new ImageIcon("images/" + fileName);
          }
+      
       icon[cardCount] = new ImageIcon("images/BK.gif");
          
    }
