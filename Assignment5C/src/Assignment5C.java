@@ -1,30 +1,23 @@
 import javax.swing.*;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Random;
 
 public class Assignment5C
 {
    static int NUM_CARDS_PER_HAND = 7;
-   static int  NUM_PLAYERS = 2;
-   static JLabel[] computerLabels = new JLabel[NUM_CARDS_PER_HAND];
-   static JLabel[] humanLabels = new JLabel[NUM_CARDS_PER_HAND];  
-   static JLabel[] playedCardLabels  = new JLabel[NUM_PLAYERS]; 
-   static JLabel[] playLabelText  = new JLabel[NUM_PLAYERS]; 
+   static int  NUM_PLAYERS = 2; 
 
    public static void main(String[] args)
    {
+      
+      Player humanPlayer, computerPlayer;
       int k, numPacksPerDeck, numJokersPerPack, numUnusedCardsPerPack;
       Card[] unusedCardsPerPack;
-      
-      // establish main frame in which program will run
-      CardTable myCardTable 
-         = new CardTable("CardTable", NUM_CARDS_PER_HAND, NUM_PLAYERS);
-      myCardTable.setSize(800, 600);
-      myCardTable.setLocationRelativeTo(null);
-      myCardTable.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      
+     
       numPacksPerDeck = 1;
       numJokersPerPack = 0;
       numUnusedCardsPerPack = 0;
@@ -36,8 +29,12 @@ public class Assignment5C
             NUM_PLAYERS, NUM_CARDS_PER_HAND);
       highCardGame.deal();
       highCardGame.sortHands();
+      computerPlayer = new Player(highCardGame.getHand(0));
+      humanPlayer = new Player(highCardGame.getHand(1));
       
-      HighCard playGame = new HighCard();
+      HighCard playGame = new HighCard(computerPlayer, humanPlayer,
+            NUM_CARDS_PER_HAND, NUM_PLAYERS);
+      
      
       
       
@@ -47,31 +44,23 @@ public class Assignment5C
 //      playLabelText[0] = new JLabel("Computer", JLabel.CENTER);
 //      playLabelText[1] = new JLabel("Player", JLabel.CENTER);
   
-      for(k = 0; k < NUM_CARDS_PER_HAND; k++)
-      {
-         computerLabels[k] = new JLabel(GUICard.getBackCardIcon());
-         humanLabels[k] = new JLabel(
-               GUICard.getIcon(highCardGame.getHand(1).inspectCard(k)));
-      }
+//      for(k = 0; k < NUM_CARDS_PER_HAND; k++)
+//      {
+//         computerLabels[k] = new JLabel(GUICard.getBackCardIcon());
+//         humanLabels[k] = new JLabel(
+//               GUICard.getIcon(highCardGame.getHand(1).inspectCard(k)));
+//      }
       
       // ADD LABELS TO PANELS -----------------------------------------
       //code goes here ...
-      for(k = 0; k < NUM_CARDS_PER_HAND; k++)
-      {
-         myCardTable.pnlComputerHand.add(computerLabels[k]); 
-         myCardTable.pnlHumanHand.add(humanLabels[k]);  
-      }
+//      for(k = 0; k < NUM_CARDS_PER_HAND; k++)
+//      {
+//         myCardTable.pnlComputerHand.add(computerLabels[k]); 
+//         myCardTable.pnlHumanHand.add(humanLabels[k]);  
+//      }
      
-      // and two random cards in the play region (simulating a computer/hum ply)
-      //code goes here ...    
-//      for(k = 0; k < NUM_PLAYERS; k++)
-//         myCardTable.pnlPlayArea.add(playedCardLabels[k]);
-//      
-//      for(k = 0; k < NUM_PLAYERS; k++)
-//         myCardTable.pnlPlayArea.add(playLabelText[k]);
-      
-      // show everything to the user
-      myCardTable.setVisible(true);
+
+     // myCardTable.setVisible(true);
       
    }//end main
 
@@ -83,45 +72,138 @@ public class Assignment5C
 
 class HighCard
 {
-   
-   private JPanel pnlComputerHand, pnlHumanHand, pnlPlayArea;
-   private Hand computerHand, playerHand;
-   private int computerScore, playerScore;
-   
-   public HighCard()
+   private CardTable myCardTable;
+   private JLabel[] computerLabels;
+   private JLabel[] humanLabels;  
+   private JLabel[] playedCardLabels; 
+   private JLabel[] playLabelText;
+   private Player humanPlayer;
+   private Player computerPlayer;
+     
+   public HighCard(Player computerPlayer, Player humanPlayer, 
+         int cardsPerHand, int numOfPlayers)
    {
-      this.pnlComputerHand = null;
-      this.pnlHumanHand = null;
-      this.pnlPlayArea = null;
-      computerHand = null;
-      playerHand = null;
-      computerScore = 0;
-      playerScore = 0;
+      this.computerLabels = new JLabel[cardsPerHand];
+      this.humanLabels = new JLabel[cardsPerHand];  
+      this.playedCardLabels  = new JLabel[numOfPlayers]; 
+      this.playLabelText  = new JLabel[numOfPlayers];
+      this.computerPlayer = computerPlayer;
+      this.humanPlayer = humanPlayer;
+      createBoard(cardsPerHand, numOfPlayers);
    }
    
-   public HighCard(JPanel pnlComputerHand, JPanel pnlHumanHand, 
-         JPanel pnlPlayArea)
+   private void createBoard(int cardsPerHand, int numOfPlayers)
    {
-      this.pnlComputerHand = pnlComputerHand;
-      this.pnlHumanHand = pnlHumanHand;
-      this.pnlPlayArea = pnlPlayArea;
-      computerHand = null;
-      playerHand = null;
-      computerScore = 0;
-      playerScore = 0;
+      myCardTable 
+      = new CardTable("CardTable", cardsPerHand, numOfPlayers);
+      myCardTable.setSize(800, 600);
+      myCardTable.setLocationRelativeTo(null);
+      myCardTable.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      
+      updateComputerPanel();
+      updateHumanPanel();
+      
+      myCardTable.setVisible(true);
    }
    
-   public int getComputerScore()
+   private void updateComputerPanel()
    {
-      return computerScore;
+      int k;
+      int handlength = computerPlayer.getHand().getNumCards();
+      
+      System.out.println(handlength);
+      
+      for(k = 0; k < handlength; k++)
+      {
+         computerLabels[k] = new JLabel(GUICard.getBackCardIcon());
+         myCardTable.pnlComputerHand.add(computerLabels[k]);
+      }  
    }
    
-   public int getPlayerScore()
+   private void updateHumanPanel()
    {
-      return playerScore;
+      int k;
+      Hand humanHand = humanPlayer.getHand();
+      
+      for(k = 0; k < humanHand.getNumCards(); k++)
+      {
+         JPanel pnlCard = new JPanel();
+         pnlCard.setLayout(new GridLayout(2, 1));
+         
+         // button
+         JButton playCardBtn = new JButton("Play Card " + (k + 1));
+         playCardBtn.addActionListener(new PlayCardListener(k));
+         
+         humanLabels[k] = new JLabel(GUICard.getIcon(humanHand.inspectCard(k)));
+         pnlCard.add(humanLabels[k]);
+         pnlCard.add(playCardBtn);
+         myCardTable.pnlHumanHand.add(pnlCard);
+      }  
+   }
+   
+   private void updateGUI()
+   {
+      updateComputerPanel();
+      updateHumanPanel();
+   }
+   
+   private class PlayCardListener implements ActionListener
+   {
+      private int cardIndex;
+      
+      public PlayCardListener(int cardIndex)
+      {
+         this.cardIndex = cardIndex;
+      }
+      
+      @Override
+      public void actionPerformed(ActionEvent e)
+      {
+         
+         Hand hand = humanPlayer.getHand();
+         
+         System.out.println(hand.toString());
+         
+         hand.playCard(cardIndex);
+         
+         System.out.println(hand.toString());
+         
+      }
+      
+   }
+   
+}
+
+class Player
+{
+   
+   private Hand hand;
+   private int score;
+   
+   public Player()
+   {
+      hand = null;
+      score = 0;
+   }
+   
+   public Player(Hand hand)
+   {
+      this.hand = hand;
+      score = 0;
+   }
+   
+   public int getScore()
+   {
+      return score;
+   }
+   
+   public Hand getHand()
+   {
+      return hand;
    }
 
 }
+
 /*------------------------------------------------------
  * end High Card Game
  *---------------------------------------------------- */
@@ -472,6 +554,28 @@ class Hand
       Card card = new Card(myCards[numCards -1].getValue(),
             myCards[numCards -1].getSuit());
       myCards[numCards -1] = null;
+      numCards--;
+      
+      return card;
+      
+   }
+   
+   /*
+    * playCard plays card on top of the deck
+    * and returns that card to the caller
+    * */
+   public Card playCard(int index)
+   {    
+      
+      if(numCards == 0 || index > numCards)
+         return null;
+      
+      Card card = new Card(myCards[index].getValue(), myCards[index].getSuit());
+      
+      for(int i = index; i < numCards - 1; i++)
+         myCards[i].set(myCards[i + 1].getValue(), myCards[i + 1].getSuit());
+      
+      myCards[numCards - 1] = null;
       numCards--;
       
       return card;
