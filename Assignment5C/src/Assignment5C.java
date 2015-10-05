@@ -179,17 +179,20 @@ class Player
    
    private Hand hand;
    private int score;
+   private Card[] winnings;
    
    public Player()
    {
       hand = null;
       score = 0;
+      winnings = null;
    }
    
-   public Player(Hand hand)
+   public Player(Hand hand, int numDecks)
    {
       this.hand = hand;
       score = 0;
+      this.winnings = new Card[numDecks * 52];
    }
    
    public int getScore()
@@ -200,6 +203,11 @@ class Player
    public Hand getHand()
    {
       return hand;
+   }
+   
+   public Card[] getWinnings()
+   {
+      return winnings;
    }
 
 }
