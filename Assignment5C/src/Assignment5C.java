@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.border.Border;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -35,32 +36,8 @@ public class Assignment5C
       HighCard playGame = new HighCard(computerPlayer, humanPlayer,
             NUM_CARDS_PER_HAND, NUM_PLAYERS);
       
-     
-      
-      
-      // CREATE LABELS ----------------------------------------------------
-//      playedCardLabels[0] = new JLabel(GUICard.getIcon(generateRandomCard()));
-//      playedCardLabels[1] = new JLabel(GUICard.getIcon(generateRandomCard()));
-//      playLabelText[0] = new JLabel("Computer", JLabel.CENTER);
-//      playLabelText[1] = new JLabel("Player", JLabel.CENTER);
-  
-//      for(k = 0; k < NUM_CARDS_PER_HAND; k++)
-//      {
-//         computerLabels[k] = new JLabel(GUICard.getBackCardIcon());
-//         humanLabels[k] = new JLabel(
-//               GUICard.getIcon(highCardGame.getHand(1).inspectCard(k)));
-//      }
-      
-      // ADD LABELS TO PANELS -----------------------------------------
-      //code goes here ...
-//      for(k = 0; k < NUM_CARDS_PER_HAND; k++)
-//      {
-//         myCardTable.pnlComputerHand.add(computerLabels[k]); 
-//         myCardTable.pnlHumanHand.add(humanLabels[k]);  
-//      }
-     
+      playGame.play();
 
-     // myCardTable.setVisible(true);
       
    }//end main
 
@@ -79,6 +56,8 @@ class HighCard
    private JLabel[] playLabelText;
    private Player humanPlayer;
    private Player computerPlayer;
+   private int cardsLeft;
+   private boolean cpuWinner;
      
    public HighCard(Player computerPlayer, Player humanPlayer, 
          int cardsPerHand, int numOfPlayers)
@@ -89,7 +68,68 @@ class HighCard
       this.playLabelText  = new JLabel[numOfPlayers];
       this.computerPlayer = computerPlayer;
       this.humanPlayer = humanPlayer;
+      this.cardsLeft = cardsPerHand;
+      this.cpuWinner = true;
       createBoard(cardsPerHand, numOfPlayers);
+   }
+   
+   public int getCardsLeft()
+   {
+      return cardsLeft;
+   }
+   
+   public void play()
+   {
+      playUI();
+   }
+   
+   private void playUI()
+   { 
+      clearUI();
+      addPlayPanel();
+      addComputerPanel();
+      addHumanPanel();
+      rePaintUI();
+   }
+   
+   private void roundOutcomeUI(Card cpuCard, Card playersCard)
+   {
+      clearUI();
+      addComputerPanel();
+      addHumanPanel();
+      addPlayPanel(cpuCard, playersCard);
+      rePaintUI();
+   }
+   
+   private void addPlayPanel()
+   {
+      myCardTable.pnlPlayArea.add(new JLabel("Your Turn First", JLabel.CENTER));
+   }
+   
+   private void addPlayPanel(Card cpuCard, Card playersCard)
+   {
+      myCardTable.pnlPlayArea.add(new JLabel(GUICard.getIcon(cpuCard)));
+      myCardTable.pnlPlayArea.add(new JLabel(GUICard.getIcon(playersCard)));
+      myCardTable.pnlPlayArea.add(new JLabel("Computer's Card", JLabel.CENTER));
+      myCardTable.pnlPlayArea.add(new JLabel("Your Card", JLabel.CENTER));
+   }
+   
+   private void gameOverUI()
+   {
+      
+   }
+   
+   private void clearUI()
+   {
+      myCardTable.pnlComputerHand.removeAll();
+      myCardTable.pnlHumanHand.removeAll();
+      myCardTable.pnlPlayArea.removeAll();
+   }
+   
+   private void rePaintUI()
+   {
+      myCardTable.getContentPane().validate();
+      myCardTable.getContentPane().repaint();
    }
    
    private void createBoard(int cardsPerHand, int numOfPlayers)
@@ -99,53 +139,38 @@ class HighCard
       myCardTable.setSize(800, 600);
       myCardTable.setLocationRelativeTo(null);
       myCardTable.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      
-      updateComputerPanel();
-      updateHumanPanel();
-      
       myCardTable.setVisible(true);
    }
+  
    
-   private void updateComputerPanel()
+   private void addComputerPanel()
    {
       int k;
       int handlength = computerPlayer.getHand().getNumCards();
-      
-      System.out.println(handlength);
-      
+            
       for(k = 0; k < handlength; k++)
-      {
-         computerLabels[k] = new JLabel(GUICard.getBackCardIcon());
-         myCardTable.pnlComputerHand.add(computerLabels[k]);
-      }  
+         myCardTable.pnlComputerHand.add(new JLabel(GUICard.getBackCardIcon())); 
    }
    
-   private void updateHumanPanel()
+   private void addHumanPanel()
    {
       int k;
       Hand humanHand = humanPlayer.getHand();
+      Border emptyBorder = BorderFactory.createEmptyBorder();
+      Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
       
       for(k = 0; k < humanHand.getNumCards(); k++)
-      {
-         JPanel pnlCard = new JPanel();
-         pnlCard.setLayout(new GridLayout(2, 1));
-         
+      {    
          // button
-         JButton playCardBtn = new JButton("Play Card " + (k + 1));
+         JButton playCardBtn = new JButton(
+               GUICard.getIcon(humanHand.inspectCard(k)));
+         playCardBtn.setBorder(emptyBorder);
+         playCardBtn.setCursor(cursor);
          playCardBtn.addActionListener(new PlayCardListener(k));
-         
-         humanLabels[k] = new JLabel(GUICard.getIcon(humanHand.inspectCard(k)));
-         pnlCard.add(humanLabels[k]);
-         pnlCard.add(playCardBtn);
-         myCardTable.pnlHumanHand.add(pnlCard);
+         myCardTable.pnlHumanHand.add(playCardBtn);
       }  
    }
    
-   private void updateGUI()
-   {
-      updateComputerPanel();
-      updateHumanPanel();
-   }
    
    private class PlayCardListener implements ActionListener
    {
@@ -159,15 +184,8 @@ class HighCard
       @Override
       public void actionPerformed(ActionEvent e)
       {
-         
-         Hand hand = humanPlayer.getHand();
-         
-         System.out.println(hand.toString());
-         
-         hand.playCard(cardIndex);
-         
-         System.out.println(hand.toString());
-         
+         roundOutcomeUI( computerPlayer.playCard(0), 
+               humanPlayer.playCard(cardIndex) );
       }
       
    }
@@ -200,6 +218,11 @@ class Player
    public Hand getHand()
    {
       return hand;
+   }
+   
+   public Card playCard(int index)
+   {
+      return hand.playCard(index);
    }
 
 }
