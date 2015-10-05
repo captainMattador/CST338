@@ -144,8 +144,8 @@ class GUICard
       char[] suit = {'C', 'D', 'H', 'S'};
       String fileName = "";
       
-      for (int i = 0; i < 4; i++)
-         for (int j = 0; j < 14; j++)
+      for (int i = 0; i < suit.length; i++)
+         for (int j = 0; j < value.length; j++)
          {
             fileName = "";
             fileName += String.valueOf(value[j]) + String.valueOf(suit[i])
