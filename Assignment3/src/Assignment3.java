@@ -344,9 +344,8 @@ class Card
     */
    public boolean equals(Card card)
    {
-      if (card == this)
-         return true;
-      return false;
+      return (this.suit.equals(card.getSuit()) && 
+            this.value == card.getValue());
    }
 }
 
