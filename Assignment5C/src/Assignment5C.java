@@ -15,28 +15,8 @@ public class Assignment5C
    public static void main(String[] args)
    {
       
-      Player humanPlayer;
-      ComputerPlayer computerPlayer;
-      int numPacksPerDeck, numJokersPerPack, numUnusedCardsPerPack;
-      Card[] unusedCardsPerPack;
-     
-      numPacksPerDeck = 1;
-      numJokersPerPack = 0;
-      numUnusedCardsPerPack = 0;
-      unusedCardsPerPack = null;
-
-      CardGameFramework highCardGame = new CardGameFramework( 
-            numPacksPerDeck, numJokersPerPack,  
-            numUnusedCardsPerPack, unusedCardsPerPack, 
-            NUM_PLAYERS, NUM_CARDS_PER_HAND);
-      highCardGame.deal();
-      highCardGame.sortHands();
-      computerPlayer = new ComputerPlayer(highCardGame.getHand(0), "Computer");
-      humanPlayer = new Player(highCardGame.getHand(1), "Player 1");
       
-      HighCard playGame = new HighCard(computerPlayer, humanPlayer,
-            NUM_CARDS_PER_HAND, NUM_PLAYERS);
-      
+      HighCard playGame = new HighCard(NUM_CARDS_PER_HAND, NUM_PLAYERS);
       playGame.initGame();
 
       
@@ -51,7 +31,7 @@ public class Assignment5C
 class HighCard
 {
    private CardTable myCardTable;
-
+   private CardGameFramework highCardGame;
    private Player humanPlayer;
    private ComputerPlayer computerPlayer;
    private Card playersPlayedCard;
@@ -70,33 +50,43 @@ class HighCard
       this.cpuPlaysFirst = false;
       this.cpuPlayedCard = null;
       this.playersPlayedCard = null;
+      this.highCardGame = null;
    }
    
-   public HighCard(ComputerPlayer computerPlayer, Player humanPlayer, 
-         int cardsPerHand, int numOfPlayers)
+   public HighCard(int cardsPerHand, int numOfPlayers)
    {
-      this.computerPlayer = computerPlayer;
-      this.humanPlayer = humanPlayer;
+      this.computerPlayer = null;
+      this.humanPlayer = null;
       this.cardsPerHand = cardsPerHand;
       this.cardsLeft = cardsPerHand;
       this.numOfPlayers = numOfPlayers;
       this.cpuPlaysFirst = true;
       this.cpuPlayedCard = null;
       this.playersPlayedCard = null;
+      this.highCardGame = null;
    }
    
-   public int getCardsLeft()
+   public boolean initGame()
    {
-      return cardsLeft;
-   }
-   
-   public void initGame()
-   {
-      if(computerPlayer == null || humanPlayer == null)
-         return;
       
+      if(cardsPerHand == 0)
+         return false;
+      
+      // insure any resets
+      cardsLeft = cardsPerHand;
+      cpuPlayedCard = null;
+      playersPlayedCard = null;
+      
+      highCardGame = new CardGameFramework( 1, 0, 0, null, numOfPlayers, 
+            cardsPerHand);
+      highCardGame.deal();
+      highCardGame.sortHands();
+      computerPlayer = new ComputerPlayer(highCardGame.getHand(0), "Computer");
+      humanPlayer = new Player(highCardGame.getHand(1), "Player 1");
       createBoard(cardsPerHand, 2);
-      playRoundUI();
+      introUI();
+      
+      return true;
    }
    
    
@@ -128,12 +118,42 @@ class HighCard
       roundOutcomeUI(message);
    }
    
+   private void introUI()
+   {
+      clearUI();
+      int k;
+      JButton flipCoin = new JButton("Flip Coin");
+      Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
+      
+      // add blank card holders
+      for(k = 0; k < cardsPerHand; k++)
+      {
+         myCardTable.pnlHumanHand.add(
+               new JLabel(GUICard.getBlankCardIcon()));
+         myCardTable.pnlComputerHand.add(
+               new JLabel(GUICard.getBlankCardIcon()));
+      }
+      
+      myCardTable.pnlPlayAreaMessage.add(
+            new JLabel("Flip to see who goes first:", JLabel.CENTER));
+      
+      flipCoin.setCursor(cursor);
+      flipCoin.addActionListener(new CoinFlip());
+
+      myCardTable.pnlPlayAreaMessage.add(flipCoin);
+      
+      rePaintUI();
+   }
+   
    private void endGameUI()
    {
       clearUI();
       int k;
       int cpuScore = computerPlayer.getScore() / 2;
       int playerScore = humanPlayer.getScore() / 2;
+      JButton playAgain = new JButton("Play Again");
+      JButton quit = new JButton("Quit");
+      Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
       String winner = "";
       
       // add blank card holders
@@ -145,7 +165,7 @@ class HighCard
                new JLabel(GUICard.getBlankCardIcon()));
       }
       
-      myCardTable.pnlPlayAreaMessage.setLayout(new GridLayout(5, 1));
+      myCardTable.pnlPlayAreaMessage.setLayout(new GridLayout(6, 1));
       
       myCardTable.pnlPlayAreaMessage.add(
             new JLabel("Game Over", JLabel.CENTER));
@@ -168,8 +188,17 @@ class HighCard
       
       myCardTable.pnlPlayAreaMessage.add(new JLabel(winner, JLabel.CENTER));
       
+      playAgain.setCursor(cursor);
+      quit.setCursor(cursor);
+      playAgain.addActionListener(new PlayAgain());
+      quit.addActionListener(new EndGame());
+
+      myCardTable.pnlPlayAreaMessage.add(playAgain);
+      myCardTable.pnlPlayAreaMessage.add(quit);
+      
       rePaintUI();
    }
+   
    /*
     * UI screen for playing a round
     * */
@@ -329,6 +358,74 @@ class HighCard
       public void actionPerformed(ActionEvent e)
       {
          playRoundUI();
+      }
+      
+   }
+   
+   private class PlayAgain implements ActionListener
+   {
+
+      @Override
+      public void actionPerformed(ActionEvent e)
+      {
+         initGame();
+      }
+      
+   }
+   
+   private class CoinFlip implements ActionListener
+   {
+
+      @Override
+      public void actionPerformed(ActionEvent e)
+      {
+         int random = (int)(Math.random() * (2 - 0));
+         JButton begin = new JButton("Start Game");
+         Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
+         
+         myCardTable.pnlPlayAreaMessage.removeAll();
+         
+         if(random == 0)
+         {
+            cpuPlaysFirst = true;
+            myCardTable.pnlPlayAreaMessage.add(
+                  new JLabel("Computer Goes First", JLabel.CENTER));
+         }
+         else
+         {
+            cpuPlaysFirst = false;
+            myCardTable.pnlPlayAreaMessage.add(
+                  new JLabel("You Go First", JLabel.CENTER));
+         }
+         
+         begin.setCursor(cursor);
+         begin.addActionListener(new BeginGame());
+         myCardTable.pnlPlayAreaMessage.add(begin);
+         
+         rePaintUI();
+            
+      }
+      
+   }
+   
+   private class BeginGame implements ActionListener
+   {
+
+      @Override
+      public void actionPerformed(ActionEvent e)
+      {
+         playRoundUI();
+      }
+      
+   }
+   
+   private class EndGame implements ActionListener
+   {
+
+      @Override
+      public void actionPerformed(ActionEvent e)
+      {
+         System.exit(0);
       }
       
    }
