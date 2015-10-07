@@ -1,3 +1,14 @@
+
+/*
+* Student
+* Assignment 5C
+* 
+* This is the full game of High Card
+* Builds upon the previous assignments to build a functional card game
+* in a GUI interface.
+*
+* */
+
 import javax.swing.*;
 import javax.swing.border.Border;
 
@@ -16,6 +27,7 @@ public class Assignment5C
    {
       
       
+      /// kicks off the high card game
       HighCard playGame = new HighCard(NUM_CARDS_PER_HAND, NUM_PLAYERS);
       playGame.initGame();
 
@@ -41,6 +53,10 @@ class HighCard
    private int cardsLeft;
    private boolean cpuPlaysFirst;
    
+   /*
+    * default constructor, not particularly useful right now
+    * but added to be complete.
+    * */
    public HighCard()
    {
       this.computerPlayer = null;
@@ -53,6 +69,11 @@ class HighCard
       this.highCardGame = null;
    }
    
+   /*
+    * Non-default constructor
+    * takes in cards per hand and number of players
+    * though for this iteration it is always two players
+    * */
    public HighCard(int cardsPerHand, int numOfPlayers)
    {
       this.computerPlayer = null;
@@ -66,6 +87,11 @@ class HighCard
       this.highCardGame = null;
    }
    
+   /*
+    * public helper method that creates/recreates a new game
+    * used to start a new game as well as play again when game is
+    * over
+    * */
    public boolean initGame()
    {
       
@@ -91,7 +117,7 @@ class HighCard
    
    
    /*
-    * Helper validation method for each round
+    * Helper method that validates the round played and what to do next
     * */
    private void validateRound()
    {
@@ -118,6 +144,10 @@ class HighCard
       roundOutcomeUI(message);
    }
    
+   /*
+    *UI View for the intro of the game. Asks user to flip the coin
+    *to decide who goes first
+    * */
    private void introUI()
    {
       clearUI();
@@ -145,6 +175,9 @@ class HighCard
       rePaintUI();
    }
    
+   /*
+    * UI View for the end of the game
+    * */
    private void endGameUI()
    {
       clearUI();
@@ -274,8 +307,7 @@ class HighCard
    
    
    /*
-    * Screen that shows the outcomes of the
-    * round
+    * UI View for showing the outcome of the round
     * */
    private void roundOutcomeUI(String message)
    {
@@ -326,6 +358,10 @@ class HighCard
    }
    
    
+   /*
+    * private helper method that clears the relevant panels for the next
+    * UI screen to be painted
+    * */
    private void clearUI()
    {
       myCardTable.pnlComputerHand.removeAll();
@@ -335,12 +371,19 @@ class HighCard
       myCardTable.pnlPlayAreaMessage.removeAll();
    }
    
+   
+   /*
+    * private helper method to repaint the UI
+    * */
    private void rePaintUI()
    {
       myCardTable.getContentPane().validate();
       myCardTable.getContentPane().repaint();
    }
    
+   /*
+    * private helper method to initiate the playing board
+    * */
    private void createBoard(int cardsPerHand, int numOfPlayers)
    {
       myCardTable 
@@ -351,6 +394,9 @@ class HighCard
       myCardTable.setVisible(true);
    }
    
+   /*
+    * Action listener for advancing a round
+    * */
    private class AdvanceRound implements ActionListener
    {
 
@@ -362,6 +408,9 @@ class HighCard
       
    }
    
+   /*
+    * Action listener for kicking off a new game
+    * */
    private class PlayAgain implements ActionListener
    {
 
@@ -373,6 +422,9 @@ class HighCard
       
    }
    
+   /*
+    * Action listener for flipping a virtual coin
+    * */
    private class CoinFlip implements ActionListener
    {
 
@@ -408,6 +460,9 @@ class HighCard
       
    }
    
+   /*
+    * Action listener for begining the game. Kicks into the playRoundUI
+    * */
    private class BeginGame implements ActionListener
    {
 
@@ -419,6 +474,10 @@ class HighCard
       
    }
    
+   
+   /*
+    * Action listener for shutting down the app
+    * */
    private class EndGame implements ActionListener
    {
 
@@ -430,6 +489,9 @@ class HighCard
       
    }
    
+   /*
+    * Action listener for when the user plays a card.
+    * */
    private class PlayCardListener implements ActionListener
    {
       private int cardIndex;
@@ -464,6 +526,9 @@ class HighCard
  *class Player
  *---------------------------------------------------- */
 
+/*
+ * a sinple class to handle some of the logic regarding a player of the game
+ * */
 class Player
 {
    
@@ -472,6 +537,9 @@ class Player
    protected String playerName;
    protected Card[] winnings;
    
+   /*
+    * default constructor
+    * */
    Player()
    {
       hand = null;
@@ -480,6 +548,9 @@ class Player
       winnings = null;
    }
    
+   /*
+    * non-default constructor. takes a Hand and a name for the player
+    * */
    Player(Hand hand, String name)
    {
       this.hand = hand;
@@ -488,16 +559,26 @@ class Player
       winnings = new Card[hand.getNumCards() * 2]; 
    }
    
+   /*
+    * getter for obtaining the score of the player
+    * */
    public int getScore()
    {
       return score;
    }
    
+   /*
+    * setter method for setting the score of the player
+    * */
    public void updateScore()
    {
       score += 2;
    }
    
+   /*
+    * updates the winnings array of the player.
+    * Not used much in our implimentation but here for completeness
+    * */
    public void updateWinnings(Card winningCardOne, Card winningCardTwo)
    {
       winnings[score] = new Card(winningCardOne.getValue(), 
@@ -507,26 +588,43 @@ class Player
       updateScore();
    }
    
+   /*
+    * getter to get the winnings array
+    * */
    public Card[] getWinnings()
    {
       return winnings;
    }
    
+   /*
+    * getter to get the actual hand of the player.
+    * useful to interact with Hand methods
+    * */
    public Hand getHand()
    {
       return hand;
    }
    
+   /*
+    * Play a cord by index. After card is played the hand is decremented by
+    * one and shifted
+    * */
    public Card playCard(int index)
    {
       return hand.playCard(index);
    }
    
+   /*
+    * getter for player name
+    * */
    public String getName()
    {
       return playerName;
    }
    
+   /*
+    * setter for player name
+    * */
    public boolean setName(String name)
    {
       if (name == "")
@@ -544,6 +642,11 @@ class Player
  *class ComputerPlayer
  *---------------------------------------------------- */
 
+/*
+ * conputerPlayer and extends player. Only difference is Computer player
+ * will handle the logic on which card to play, instead of reacting to a 
+ * listener
+ * */
 class ComputerPlayer extends Player
 {
    
@@ -557,6 +660,11 @@ class ComputerPlayer extends Player
       super(hand, name);
    }
    
+   /*
+    * plays card based on the opponents card, if it can beat the opponent
+    * it plays the lowest card that beats it, if it can't it plays the lowest
+    * card in hand
+    * */
    public Card playCard(Card opponentCard)
    {
 
@@ -576,6 +684,9 @@ class ComputerPlayer extends Player
       return hand.playCard(winningCardIndex);      
    }
    
+   /*
+    * plays the highest card in hand
+    * */
    public Card playCard()
    {
       return hand.playCard();
@@ -603,6 +714,9 @@ class CardTable extends JFrame
    public JPanel pnlComputerHand, pnlHumanHand, pnlPlayArea, pnlPlayAreaCards, 
       pnlPlayAreaMessage, pnlPlayAreaComputer, pnlPlayAreaHuman;
    
+   /*
+    * default constructor for a card table
+    * */
    public CardTable(String title, int numCardsPerHand, int numPlayers)
    {
       super();
@@ -646,12 +760,17 @@ class CardTable extends JFrame
       add(pnlHumanHand, BorderLayout.SOUTH);
    }
    
-   //accessors
+   /*
+    * get number of cards per hand
+    * */
    public int getNumCardsPerHand()
    {
       return numCardsPerHand;
    }
    
+   /*
+    * get number of players
+    * */
    public int getNumPlayers()
    {
       return numPlayers;
@@ -674,6 +793,9 @@ class GUICard
    static boolean iconsLoaded = false;
    
 
+   /*
+    * loads the  Icons for each card value
+    * */
    static void loadCardIcons()
    {
       char[] value = {'A', '2', '3', '4', '5', '6', '7', '8', '9', 'T',
@@ -694,6 +816,9 @@ class GUICard
       iconsLoaded = true;
    }
   
+   /*
+    * getter to get an Icon for a requested card
+    * */
    static public Icon getIcon(Card card)
    {
 
@@ -706,6 +831,9 @@ class GUICard
       return iconCards[cardValue][suitValue];  
    }//end method getIcon
    
+   /*
+    * getter to get a back of card icon
+    * */
    static public Icon getBackCardIcon()
    {
       if (!iconsLoaded)
@@ -714,6 +842,9 @@ class GUICard
       return iconBack;
    }
    
+   /*
+    * getter to get a blank card holder
+    * */
    static public Icon getBlankCardIcon()
    {
       if (!iconsLoaded)
@@ -722,6 +853,9 @@ class GUICard
       return iconBlank;
    }
    
+   /*
+    * returns a cards value as an int
+    * */
    static int valueAsInt(char cardValue)
    {
       int value = 0;
@@ -736,6 +870,9 @@ class GUICard
       return value;               
    }//end method valueAsInt
    
+   /*
+    * returns a cards suit as an int
+    * */
    static int suitAsInt(Card.Suit suit)
    {
       if (suit.equals(Card.Suit.CLUBS))
@@ -865,6 +1002,10 @@ class Card
 
    }//end method equal
    
+   
+   /*
+    * returns the index of a given card
+    */
    private static int valueIndex(Card card)
    {
 
@@ -876,6 +1017,10 @@ class Card
       
       return -1;
    }
+   
+   /*
+    * bubble sort for sorting the array
+    */
    public static void arraySort(Card[] cardArray, int arraySize)
    {
       Card tempCard;
@@ -1034,6 +1179,9 @@ class Hand
       
    }
    
+   /*
+    * sorts the hand. Uses Cards bubble sort
+    */
    public void sort()
    {
       Card.arraySort(myCards, numCards);
@@ -1202,6 +1350,10 @@ class Deck
    }
 
 
+   /*
+    * remove card from deck. Takes a card as a value and searches to
+    * remove that card
+    */
    public boolean removeCard(Card card)
    {
       for(int i = 0; i < topCard; i++)
@@ -1218,6 +1370,9 @@ class Deck
       return false;
    }
    
+   /*
+    * add card to deck.
+    */
    public boolean addCard(Card card)
    {
       int numOfInstances = 0;
@@ -1236,11 +1391,17 @@ class Deck
       return true;
    }
    
+   /*
+    * returns the number of cards
+    */
    public int getNumCards()
    {
       return topCard;
    }
    
+   /*
+    * sorts the deck. Uses Cards bubble sort
+    */
    public void sort()
    {
       Card.arraySort(cards, topCard);

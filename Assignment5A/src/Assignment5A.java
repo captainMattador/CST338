@@ -1,3 +1,12 @@
+/*
+* Student
+* Assignment 5A
+* 
+* The idea here is to get the application to read the carsd and assign
+* the correct icon to it for the GUI 
+*
+* */
+
 import javax.swing.*;
 import java.awt.*;
 
