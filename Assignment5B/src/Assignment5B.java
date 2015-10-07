@@ -6,6 +6,7 @@ import java.util.Random;
 
 public class Assignment5B
 {
+   //Assigning number of cards per a player to 7
    static int NUM_CARDS_PER_HAND = 7;
    static int  NUM_PLAYERS = 2;
    static JLabel[] computerLabels = new JLabel[NUM_CARDS_PER_HAND];
@@ -37,8 +38,7 @@ public class Assignment5B
          humanLabels[k] = new JLabel(GUICard.getIcon(generateRandomCard()));
       }
       
-      // ADD LABELS TO PANELS -----------------------------------------
-      //code goes here ...
+      // Adding labels to panels 
       for(k = 0; k < NUM_CARDS_PER_HAND; k++)
       {
          myCardTable.pnlComputerHand.add(computerLabels[k]); 
@@ -72,6 +72,9 @@ public class Assignment5B
  * CardTable
  *---------------------------------------------------- */
 
+/*class CardTable to control the positioning of panels and cards
+ * of the GUI
+ */
 class CardTable extends JFrame
 {
    public static int MAX_CARDS_PER_HAND = 56;
@@ -82,6 +85,9 @@ class CardTable extends JFrame
    private int numCardsPerHand, numPlayers;
    public JPanel pnlComputerHand, pnlHumanHand, pnlPlayArea;
    
+   /*Constructor CardTable , to filter input and add panels to the JFrame
+    * and establish layouts
+    */
    public CardTable(String title, int numCardsPerHand, int numPlayers)
    {
       super();
@@ -110,7 +116,9 @@ class CardTable extends JFrame
       add(pnlHumanHand, BorderLayout.SOUTH);
    }
    
-   //accessors
+   /*accessors to get number of cards per hand
+    * and number of players
+    */
    public int getNumCardsPerHand()
    {
       return numCardsPerHand;
@@ -130,8 +138,10 @@ class CardTable extends JFrame
 /*------------------------------------------------------
  * GUICard
  *---------------------------------------------------- */
+
 class GUICard
 {
+   //2D array of type Icon to store cards value and suit
    private static Icon[][] iconCards = new ImageIcon[14][4]; 
    private static Icon iconBack;
    static boolean iconsLoaded = false;
@@ -156,6 +166,7 @@ class GUICard
       iconsLoaded = true;
    }
   
+   //accessor to get Icon from Card object
    static public Icon getIcon(Card card)
    {
 
@@ -168,6 +179,7 @@ class GUICard
       return iconCards[cardValue][suitValue];  
    }//end method getIcon
    
+   //accessor to get Icon of Card's back
    static public Icon getBackCardIcon()
    {
       if (!iconsLoaded)
@@ -190,6 +202,7 @@ class GUICard
       return value;               
    }//end method valueAsInt
    
+   //method suitAsInt to change suit in to integer
    static int suitAsInt(Card.Suit suit)
    {
       if (suit.equals(Card.Suit.CLUBS))
@@ -460,6 +473,7 @@ class Hand
       
    }
    
+   //method to sort the hand
    public void sort()
    {
       Card.arraySort(myCards, numCards);

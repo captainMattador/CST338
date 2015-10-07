@@ -15,7 +15,7 @@ public class Assignment5C
    public static void main(String[] args)
    {
       
-      
+      //new object created from class HighCard 
       HighCard playGame = new HighCard(NUM_CARDS_PER_HAND, NUM_PLAYERS);
       playGame.initGame();
 
