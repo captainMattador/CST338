@@ -27,8 +27,8 @@ class Assignment5C
 
 
       /// kicks off the high card game
-//      HighCard playGame = new HighCard(NUM_CARDS_PER_HAND, NUM_PLAYERS);
-//      playGame.initGame();
+      HighCard playGame = new HighCard(NUM_CARDS_PER_HAND, NUM_PLAYERS);
+      playGame.initGame();
 
 
    }//end main
