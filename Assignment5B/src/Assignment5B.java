@@ -1,3 +1,13 @@
+/*
+* Matthew Bozelka
+* Assignment 5B
+* 
+* The idea in this step is to start separting the gui
+* into a computer hand and a player hand, by dealing the correct
+* amount of cards
+*
+* */
+
 import javax.swing.*;
 
 import java.awt.*;
@@ -641,7 +651,9 @@ class Deck
       }
    }
 
-
+   /*
+    * removes a card from the deck
+    */
    public boolean removeCard(Card card)
    {
       for(int i = 0; i < topCard; i++)
@@ -658,6 +670,9 @@ class Deck
       return false;
    }
    
+   /*
+    * adds a card to the deck
+    */
    public boolean addCard(Card card)
    {
       int numOfInstances = 0;
@@ -676,11 +691,17 @@ class Deck
       return true;
    }
    
+   /*
+    * returns the number of cards left in deck
+    */
    public int getNumCards()
    {
       return topCard;
    }
    
+   /*
+    * sorts the Deck. Uses Cards bubble sort
+    */
    public void sort()
    {
       Card.arraySort(cards, topCard);
