@@ -228,19 +228,19 @@ class BarcodeImage implements Cloneable
     * clone overides interface Cloneable method clone and returns
     * a copy of BarcodeImage
     */
-   public Object clone()
-   {
-      try
-      {
-         BarcodeImage copy = (BarcodeImage)super.clone();
-         copy.image_data = (boolean[][])image_data.clone();
-         return copy;
-      }
-      catch (CloneNotSupportedException e)
-      {
-         return null;
-      }
-   }
+//   public Object clone()
+//   {
+//      try
+//      {
+//         BarcodeImage copy = (BarcodeImage)super.clone();
+//         copy.image_data = (boolean[][])image_data.clone();
+//         return copy;
+//      }
+//      catch (CloneNotSupportedException e)
+//      {
+//         return null;
+//      }
+//   }
    
    /*
     * checkSize accepts a string array and checks to make sure it not longer

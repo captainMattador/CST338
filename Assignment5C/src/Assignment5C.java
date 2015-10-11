@@ -14,403 +14,463 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
 class Assignment5C
 {
-
+   static int MAX_CARDS_PER_HAND = 56;
+   static int NUM_PLAYERS = 2;
+   
    public static void main(String[] args)
    {
-
-   }//end main
+      
+      int numPacksPerDeck = 1;
+      int numJokersPerPack = 0;
+      int numUnusedCardsPerPack = 0;
+      int numOfPlayers = 2;
+      int cardsPerHand = 7;
+      Card[] unusedCardsPerPack = null;
+      
+      CardGameFramework highCardGame = new CardGameFramework( 
+            numPacksPerDeck, numJokersPerPack,  
+            numUnusedCardsPerPack, unusedCardsPerPack, 
+            numOfPlayers, cardsPerHand);
+      
+      GameModel model = new GameModel(highCardGame, "Computer", "Player");
+      GameView view = new GameView();
+      
+      GameControl game = new GameControl(model, view);
+   }
 
 }
 
 
 /*------------------------------------------------------
+ * class GameModel
+ *---------------------------------------------------- */
+
+class GameModel
+{
+   private CardGameFramework highCardGame;
+   private int cpuPlayer, humanPlayer;
+   private int cpuScore, humanScore;
+   private String cpuName, humanName;
+   private int firstPlayer;
+   private int cardsLeft;
+   private Card cpuPlayedCard, humanPlayedCard;
+   
+   public GameModel()
+   {
+      this.highCardGame = null;
+      cpuName = "";
+      cpuPlayer = 0;
+      cpuScore = 0;
+      humanName = "";
+      humanPlayer = 0;
+      humanScore = 0;
+      cardsLeft = 0;
+   }
+   
+   public GameModel(CardGameFramework highCardGame, String cpuName, 
+         String humanName)
+   {
+      this.highCardGame = highCardGame;
+      this.cpuName = cpuName;
+      cpuPlayer = 0;
+      cpuScore = 0;
+      this.humanName = humanName;
+      humanPlayer = 1;
+      humanScore = 0;
+      cardsLeft = highCardGame.geNumCardsPerHand();
+   }
+   
+   public void resetGame()
+   {
+      highCardGame.newGame();
+      cpuScore = 0;
+      humanScore = 0;
+      cardsLeft = highCardGame.geNumCardsPerHand();
+   }
+   
+   public void dealCards()
+   {
+      highCardGame.deal();
+      highCardGame.sortHands();
+   }
+   
+   public int getCardsLeft()
+   {
+      return cardsLeft;
+   }
+   
+   public boolean setCardsLeft()
+   {
+      if(cardsLeft - 1 < 0)
+         return false;
+      
+      cardsLeft--;
+      return true;
+   }
+   
+   public Hand getCpuHand()
+   {
+      return highCardGame.getHand(cpuPlayer);
+   }
+   
+   public int getCpuScore()
+   {
+      return cpuScore;
+   }
+   
+   public boolean setCpuScore()
+   {
+      cpuScore++;
+      return true;
+   }
+   
+   public Hand getHumanHand()
+   {
+      return highCardGame.getHand(humanPlayer);
+   }
+   
+   public int getHumanScore()
+   {
+      return humanScore;
+   }
+   
+   public boolean setHumanScore()
+   {
+      humanScore++;
+      return true;
+   }
+   
+   public int getNumCardsPerHand()
+   {
+      return highCardGame.geNumCardsPerHand();
+   }
+   
+   public boolean setFirstPlayer(int playerIndex)
+   {
+      
+      firstPlayer = playerIndex;
+      return true;
+   }
+   
+   public int getFirstPlayer()
+   {     
+      return firstPlayer;
+   }
+   
+   public String getCpuName()
+   {
+      return cpuName;
+   }
+   
+   public String getHumanName()
+   {
+      return humanName;
+   }
+   
+   public Card getHumanPlayedCard()
+   {
+      return humanPlayedCard;
+   }
+   
+   public boolean setHumanPlayedCard(Card card)
+   {
+      if(card == null)
+         return false;
+      
+      humanPlayedCard = new Card(card.getValue(), card.getSuit());
+      return true;
+   }
+   
+   public Card getCpuPlayedCard()
+   {
+      return cpuPlayedCard;
+   }
+   
+   public boolean setCpuPlayedCard(Card card)
+   {
+      if(card == null)
+         return false;
+      
+      cpuPlayedCard = new Card(card.getValue(), card.getSuit());
+      return true;
+   }
+}
+
+/*------------------------------------------------------
+ * end of GameModel
+ *---------------------------------------------------- */
+
+/*------------------------------------------------------
  * class GameView
  *---------------------------------------------------- */
-class GameView
+class GameView extends JFrame
 {
-   boolean cpuPlaysFirst;
-   GameControl controller;
-   CardTable myCardTable;
-   Card playersPlayedCard, cpuPlayedCard;
 
-
-   //default constructor
-   public GameView(String title, int numCardsPerHand, int numPlayers,
-         String name1, String name2, Hand playerHand, Hand compHand)
+   private static String[] pnlTitles = {"High Card", 
+      "Computer Hand", "Player Hand", "Playing Area", "Time Played"};
+   
+   private JButton endGameBtn, playAgainBtn, nextRoundBtn;
+   
+   private JPanel pnlCpuHand, pnlHumanHand, pnlTimer, pnlOutput, 
+   pnlPlayArea, pnlCardsPlayed, pnlCpuCardPlayed, pnlHumanCardPlayed;
+   
+   private ArrayList<JButton> playersCardsBtns = new ArrayList<JButton>();
+   
+   // default constructor
+   // sets up the initial view, which is really
+   // the table and it's main holders
+   public GameView()
    {
-      createBoard(title, numCardsPerHand, numPlayers);
-      controller = new GameControl(name1, name2, playerHand, compHand);
+      super();
+      setTitle(pnlTitles[0]);
+      setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      setLayout(new BorderLayout());
+      
+      endGameBtn = new JButton("End Game");
+      playAgainBtn = new JButton("Play Again");
+      
+      // timer panel
+      pnlTimer = new JPanel();
+      
+      // cpu played Card
+      pnlCpuCardPlayed = new JPanel(new GridLayout(2, 1));
+      
+      // human played Card
+      pnlHumanCardPlayed = new JPanel(new GridLayout(2, 1));
+      
+      // area for cards played
+      pnlCardsPlayed = new JPanel(new GridLayout(1, 2));
+      pnlCardsPlayed.add(pnlCpuCardPlayed);
+      pnlCardsPlayed.add(pnlHumanCardPlayed);
+      
+      // computers cards panel
+      pnlCpuHand = new JPanel();
+      pnlCpuHand.setLayout(new GridLayout(1, 7));
+      
+      // players cards panel
+      pnlHumanHand = new JPanel();
+      pnlHumanHand.setLayout(new GridLayout(1, 7));
+      
+      // output area
+      pnlOutput = new JPanel(new GridLayout(3, 1));
+      
+      // playing area
+      pnlPlayArea = new JPanel(new GridBagLayout());
+      GridBagConstraints c = new GridBagConstraints();
+      
+      c.fill = GridBagConstraints.HORIZONTAL;
+      c.gridx = 0;
+      c.gridy = 0;
+      pnlPlayArea.add(pnlCpuHand, c);
+      
+      c.fill = GridBagConstraints.HORIZONTAL;
+      c.gridx = 0;
+      c.gridy = 1;
+      c.weighty = 1.0;
+      pnlPlayArea.add(pnlCardsPlayed, c);
+      
+      c.fill = GridBagConstraints.HORIZONTAL;
+      c.gridx = 0;
+      c.gridy = 2;
+      pnlPlayArea.add(pnlOutput, c);
+      
+      c.fill = GridBagConstraints.HORIZONTAL;
+      c.gridx = 0;
+      c.gridy = 3;
+      pnlPlayArea.add(pnlHumanHand, c);
+      
+      
+      // add all the major components to the screen
+      this.add(pnlTimer, BorderLayout.NORTH);
+      this.add(pnlPlayArea,BorderLayout.CENTER);
+      this.setSize(800, 600);
+      this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      this.setVisible(true);
    }
-
-   /*
-    * private helper method to initiate the playing board
-    * */
-   private void createBoard(String title, int cardsPerHand, int numOfPlayers)
+   
+   public void playRoundScreen(String message, Hand cpuHand, 
+         Hand humanHand, int maxHandSize)
    {
-      myCardTable
-      = new CardTable(title, cardsPerHand, numOfPlayers);
-      myCardTable.setSize(800, 600);
-      myCardTable.setLocationRelativeTo(null);
-      myCardTable.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      myCardTable.setVisible(true);
+      if(cpuHand == null || humanHand == null || 
+            maxHandSize == 0)
+         return;
+      
+      JLabel textOutput = new JLabel(message);
+      textOutput.setHorizontalAlignment(JLabel.CENTER);
+      pnlOutput.add(textOutput);
+      showCpuHand(cpuHand, maxHandSize);
+      showHumanHandAsButtons(humanHand, maxHandSize);
+      
    }
-
-   /*
-    * private helper method that clears the relevant panels for the next
-    * UI screen to be painted
-    * */
-   private void clearUI()
+   
+   public void roundOutcomeScreen(String message, Hand cpuHand, Card cpuCard,
+         String cpuName, Hand humanHand, Card humanCard, String humanName, 
+         int maxHandSize)
    {
-      myCardTable.pnlComputerHand.removeAll();
-      myCardTable.pnlHumanHand.removeAll();
-      myCardTable.pnlPlayAreaComputer.removeAll();
-      myCardTable.pnlPlayAreaHuman.removeAll();
-      myCardTable.pnlPlayAreaMessage.removeAll();
+      if(cpuHand == null || humanHand == null || 
+            maxHandSize == 0)
+         return;
+      
+      JLabel textOutput = new JLabel(message);
+      textOutput.setHorizontalAlignment(JLabel.CENTER);
+      nextRoundBtn = new JButton("Next Round");
+      pnlOutput.add(textOutput);
+      pnlOutput.add(nextRoundBtn);
+      showCpuPlayedCard(cpuCard, cpuName);
+      showHumanPlayedCard(humanCard, humanName);
+      showCpuHand(cpuHand, maxHandSize);
+      showHumanHand(humanHand, maxHandSize);
+      
    }
-
-   /*
-    *UI View for the intro of the game. Asks user to flip the coin
-    *to decide who goes first
-    * */
-   public void introUI(int cardsPerHand)
+   
+   public void gameOutcomeScreen(String message)
    {
-      clearUI();
-      int k;
-      JButton flipCoin = new JButton("Flip Coin");
-      Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
-
-      // add blank card holders
-      for(k = 0; k < cardsPerHand; k++)
-      {
-         myCardTable.pnlHumanHand.add(
-               new JLabel(GUICard.getBlankCardIcon()));
-         myCardTable.pnlComputerHand.add(
-               new JLabel(GUICard.getBlankCardIcon()));
-      }
-
-      myCardTable.pnlPlayAreaMessage.add(
-            new JLabel("Flip to see who goes first:", JLabel.CENTER));
-
-      flipCoin.setCursor(cursor);
-      flipCoin.addActionListener(new CoinFlip());
-
-      myCardTable.pnlPlayAreaMessage.add(flipCoin);
-
-      rePaintUI();
+      if(message == null)
+         return;
+      
+      JLabel textOutput = new JLabel(message);
+      textOutput.setHorizontalAlignment(JLabel.CENTER);
+      pnlOutput.add(textOutput);
+      pnlOutput.add(playAgainBtn);
+      pnlOutput.add(endGameBtn);
+      
    }
-
-   /*
-    * UI View for the end of the game
-    * */
-   private void endGameUI()
-   {
-      clearUI();
-      int k;
-      int cpuScore = controller.comPlayer.getScore() / 2;
-      int playerScore = controller.humanPlayer.getScore() / 2;
-      JButton playAgain = new JButton("Play Again");
-      JButton quit = new JButton("Quit");
-      Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
-      String winner = "";
-
-      // add blank card holders
-      for(k = 0; k < GameModel.getCardsPerHand(); k++)
-      {
-         myCardTable.pnlHumanHand.add(
-               new JLabel(GUICard.getBlankCardIcon()));
-         myCardTable.pnlComputerHand.add(
-               new JLabel(GUICard.getBlankCardIcon()));
-      }
-
-      myCardTable.pnlPlayAreaMessage.setLayout(new GridLayout(6, 1));
-
-      myCardTable.pnlPlayAreaMessage.add(
-            new JLabel("Game Over", JLabel.CENTER));
-
-      myCardTable.pnlPlayAreaMessage.add(
-            new JLabel(
-                  controller.comPlayer.getName() + " won "  + cpuScore +
-                  " rounds", JLabel.CENTER));
-      myCardTable.pnlPlayAreaMessage.add(
-            new JLabel(
-                  controller.humanPlayer.getName() + " won "  + playerScore +
-                  " rounds", JLabel.CENTER));
-
-      if(playerScore > cpuScore)
-         winner = "Congratulations! You won!";
-      else if(playerScore == cpuScore)
-         winner = "You tied with the the computer!";
-      else
-         winner = "Sorry, you lost the game.";
-
-      myCardTable.pnlPlayAreaMessage.add(new JLabel(winner, JLabel.CENTER));
-
-      playAgain.setCursor(cursor);
-      quit.setCursor(cursor);
-      playAgain.addActionListener(new PlayAgain());
-      quit.addActionListener(new EndGame());
-
-      myCardTable.pnlPlayAreaMessage.add(playAgain);
-      myCardTable.pnlPlayAreaMessage.add(quit);
-
-      rePaintUI();
-   }
-
+   
    /*
     * private helper method to repaint the UI
     * */
-   private void rePaintUI()
+   public void clearUI()
    {
-      myCardTable.getContentPane().validate();
-      myCardTable.getContentPane().repaint();
+      pnlCpuHand.removeAll();
+      pnlCpuCardPlayed.removeAll();
+      pnlHumanHand.removeAll();
+      pnlHumanCardPlayed.removeAll();
+      pnlOutput.removeAll();
+      this.getContentPane().repaint();
    }
-
+   
    /*
-    * UI screen for playing a round
+    * private helper method to repaint the UI
     * */
-   private void playRoundUI()
+   public void rePaintUI()
    {
-      // game is over
-      if(GameModel.getCardsLeft() == 0)
-      {
-         endGameUI();
-         return;
-      }
-
-      clearUI();
-      int k;
-      String message = "";
-      Hand humanHand = controller.humanPlayer.getHand();
-      Hand cpuHand = controller.comPlayer.getHand();
-      Border emptyBorder = BorderFactory.createEmptyBorder();
-      Card cpuPlayedCard;
-
-      Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
-
-      // players cards as buttons
-      for(k = 0; k < GameModel.getCardsPerHand(); k++)
-      {
-         if(k > GameModel.getCardsLeft() - 1)
-         {
-            // blanks for played cards
-            myCardTable.pnlHumanHand.add(
-                  new JLabel(GUICard.getBlankCardIcon()));
-         }else
-         {
-            JButton playCardBtn = new JButton(
-                  GUICard.getIcon(humanHand.inspectCard(k)));
-            playCardBtn.setBorder(emptyBorder);
-            playCardBtn.setCursor(cursor);
-            playCardBtn.addActionListener(new PlayCardListener(k));
-            myCardTable.pnlHumanHand.add(playCardBtn);
-         }
-      }
-
-      if(cpuPlaysFirst)
-      {
-         // cpu is first. play their card and show it
-         cpuPlayedCard = controller.comPlayer.playCard();
-         myCardTable.pnlPlayAreaComputer.add(
-               new JLabel(GUICard.getIcon(cpuPlayedCard)));
-         myCardTable.pnlPlayAreaComputer.add(
-               new JLabel(controller.comPlayer.getName(), JLabel.CENTER));
-
-         message = "Your turn to play. Select your card.";
-      }else
-         message = "You play first. Select your card.";
-
-      // add the center play table message
-      myCardTable.pnlPlayAreaMessage.add(new JLabel(message, JLabel.CENTER));
-
-      // add cpu cards separately in case they played first
-      for(k = 0; k < GameModel.getCardsPerHand(); k++)
-      {
-         if(k > cpuHand.getNumCards() -1)
-         {
-            myCardTable.pnlComputerHand.add(
-                  new JLabel(GUICard.getBlankCardIcon()));
-         }else
-         {
-            // computers hand
-            myCardTable.pnlComputerHand.add(
-                  new JLabel(GUICard.getBackCardIcon()));
-         }
-      }
-
-      rePaintUI();
+      this.getContentPane().validate();
+      this.getContentPane().repaint();
    }
-
-   /*
-    * UI View for showing the outcome of the round
-    * */
-   private void roundOutcomeUI(String message)
-   {
-      clearUI();
-
-      int k = 0;
-      Hand humanHand = controller.humanPlayer.getHand();
-      Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
-
-      for(k = 0; k < GameModel.getCardsPerHand(); k++)
+   
+   private void showCpuHand(Hand hand, int maxHandSize)
+   {  
+      
+      for(int k = 0; k < maxHandSize; k++)
       {
-
-         if(k > GameModel.getCardsLeft() - 1)
-         {
-            // add blank cards as placeholders
-            myCardTable.pnlComputerHand.add(
-                  new JLabel(GUICard.getBlankCardIcon()));
-            myCardTable.pnlHumanHand.add(
-                  new JLabel(GUICard.getBlankCardIcon()));
-         }else
-         {
-            // add computers hand
-            myCardTable.pnlComputerHand.add(
-                  new JLabel(GUICard.getBackCardIcon()));
-            // add players hand as static
-            myCardTable.pnlHumanHand.add(
-                  new JLabel(GUICard.getIcon(humanHand.inspectCard(k))));
-         }
+         if(k > hand.getNumCards() - 1)
+            pnlCpuHand.add(new JLabel(GUICard.getBlankCardIcon()));
+         else
+            pnlCpuHand.add(new JLabel(GUICard.getBackCardIcon()));
       }
-
-      myCardTable.pnlPlayAreaComputer.add(
-            new JLabel(GUICard.getIcon(cpuPlayedCard)));
-      myCardTable.pnlPlayAreaComputer.add(
-            new JLabel(controller.comPlayer.getName(), JLabel.CENTER));
-      myCardTable.pnlPlayAreaHuman.add(
-            new JLabel(GUICard.getIcon(playersPlayedCard)));
-      myCardTable.pnlPlayAreaHuman.add(
-            new JLabel(controller.humanPlayer.getName(), JLabel.CENTER));
-
-      JButton nextRoundBtn = new JButton("Next Round");
-      nextRoundBtn.addActionListener(new AdvanceRound());
-      nextRoundBtn.setCursor(cursor);
-
-      myCardTable.pnlPlayAreaMessage.add(new JLabel(message, JLabel.CENTER));
-      myCardTable.pnlPlayAreaMessage.add(nextRoundBtn);
-
-      rePaintUI();
+      
    }
-
-   /*
-    * Action listener for advancing a round
-    * */
-   private class AdvanceRound implements ActionListener
+   
+   private void showHumanHand(Hand hand, int maxHandSize)
    {
-
-      @Override
-      public void actionPerformed(ActionEvent e)
+      
+      for(int k = 0; k < maxHandSize; k++)
       {
-         playRoundUI();
-      }
-
-   }
-
-   /*
-    * Action listener for kicking off a new game
-    * */
-   private class PlayAgain implements ActionListener
-   {
-
-      @Override
-      public void actionPerformed(ActionEvent e)
-      {
-         initGame();
+         if(k > hand.getNumCards() - 1)
+            pnlHumanHand.add(new JLabel(GUICard.getBlankCardIcon()));
+         else
+            pnlHumanHand.add(new JLabel(GUICard
+                  .getIcon(hand.inspectCard(k))));
       }
    }
-
-   /*
-    * Action listener for flipping a virtual coin
-    * */
-   private class CoinFlip implements ActionListener
-   {
-
-      @Override
-      public void actionPerformed(ActionEvent e)
+   
+   private void showHumanHandAsButtons(Hand hand, int maxHandSize)
+   {     
+      playersCardsBtns.clear();
+      for(int k = 0; k < maxHandSize; k++)
       {
-         JButton begin = new JButton("Start Game");
-         Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
-
-         myCardTable.pnlPlayAreaMessage.removeAll();
-
-         if (GameModel.flipCoin())
+         if(k > hand.getNumCards() - 1)
          {
-            cpuPlaysFirst = true;
-            myCardTable.pnlPlayAreaMessage.add(
-                  new JLabel("Computer Goes First", JLabel.CENTER));
+            pnlHumanHand.add(new JLabel(GUICard.getBlankCardIcon()));  
          }
          else
          {
-            myCardTable.pnlPlayAreaMessage.add(
-                  new JLabel("You Go First", JLabel.CENTER));
+            JButton playCardBtn = new JButton(
+                  GUICard.getIcon(hand.inspectCard(k)));
+            playCardBtn.setBorder(BorderFactory.createEmptyBorder());
+            playCardBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            playersCardsBtns.add(playCardBtn);
+            
+            pnlHumanHand.add(playersCardsBtns.get(k));
          }
-
-         begin.setCursor(cursor);
-         begin.addActionListener(new BeginGame());
-         myCardTable.pnlPlayAreaMessage.add(begin);
-
-         rePaintUI();
       }
    }
-
-   /*
-    * Action listener for begining the game. Kicks into the playRoundUI
-    * */
-   private class BeginGame implements ActionListener
+   
+   public void showMessageg(String title, String message)
+   {  
+      JOptionPane.showMessageDialog(
+            this,
+            message,
+            title,
+            JOptionPane.PLAIN_MESSAGE);
+   }
+   
+   public int showOptionDialog(String title, String message, String[] options)
+   {  
+      int option = JOptionPane.showOptionDialog(
+            this, 
+            message,
+            title, 
+            JOptionPane.YES_NO_CANCEL_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]);
+      
+      return option;
+   }
+   
+   public void showCpuPlayedCard(Card card, String name)
    {
-
-      @Override
-      public void actionPerformed(ActionEvent e)
-      {
-         playRoundUI();
-      }
+      pnlCpuCardPlayed.add(new JLabel(GUICard.getIcon(card)));
+      pnlCpuCardPlayed.add(new JLabel(name));
    }
-
-   /*
-    * Action listener for shutting down the app
-    * */
-   private class EndGame implements ActionListener
+   
+   public void showHumanPlayedCard(Card card, String name)
    {
-
-      @Override
-      public void actionPerformed(ActionEvent e)
-      {
-         System.exit(0);
-      }
-
+      pnlHumanCardPlayed.add(new JLabel(GUICard.getIcon(card)));
+      pnlHumanCardPlayed.add(new JLabel(name));
    }
-
-   /*
-    * Action listener for when the user plays a card.
-    * */
-   private class PlayCardListener implements ActionListener
+   
+   public void playersCardActionListener(int index, ActionListener l)
    {
-      private int cardIndex;
-
-      public PlayCardListener(int cardIndex)
-      {
-         this.cardIndex = cardIndex;
-      }
-
-      @Override
-      public void actionPerformed(ActionEvent e)
-      {
-
-         playersPlayedCard = controller.humanPlayer.playCard(cardIndex);
-
-         if(!cpuPlaysFirst)
-            cpuPlayedCard = computerPlayer.playCard(playersPlayedCard);
-
-         validateRound();
-
-      }
-
+      playersCardsBtns.get(index).setCursor(new Cursor(Cursor.HAND_CURSOR));
+      playersCardsBtns.get(index).addActionListener(l);
    }
-
+   
+   public void nextRoundActionListener(ActionListener l)
+   {
+      nextRoundBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+      nextRoundBtn.addActionListener(l);
+   }
+   
+   public void endActionListener(ActionListener l)
+   {
+      endGameBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+      endGameBtn.addActionListener(l);
+   }
+   
+   public void playAgainActionListener(ActionListener l)
+   {
+      playAgainBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+      playAgainBtn.addActionListener(l);
+   }
 }
 /*------------------------------------------------------
  * end of GameView
@@ -421,825 +481,282 @@ class GameView
  *---------------------------------------------------- */
 class GameControl
 {
-   Player humanPlayer;
-   ComputerPlayer comPlayer;
+   GameModel model;
+   GameView view;
 
-   public GameControl(String name1, String name2, Hand playerHand,
-         Hand compHand)
+   public GameControl()
    {
-      humanPlayer = new Player(playerHand ,name1);
-      comPlayer = new ComputerPlayer(compHand, name2);
+      this.model = null;
+      this.view = null;
    }
+   
+   public GameControl(GameModel model, GameView view)
+   {
+      this.model = model;
+      this.view = view;
+      
+      String[] options = {"Flip"};
+      String message = "";
+      int firstPlayer;
+      
+      this.view.showOptionDialog(
+            "Get Ready to Play!",
+            "Flip a Coin to Start the Game:", 
+            options);
+      
+      firstPlayer = flipCoin();
+      this.model.setFirstPlayer(firstPlayer);
+      
+      message = (firstPlayer == 0) ? this.model.getCpuName() : 
+         this.model.getHumanName();
+      message += " goes first!";
+         
+      this.view.showMessageg("First Player", message);
+      
+      this.model.dealCards();
+      
+      progressToPlayRound(firstPlayer);
+   }
+   
+   public boolean setModel(GameModel model)
+   {
+      if(model == null)
+         return false;
+               
+      this.model = model;
+      return true;
+      
+   }
+   
+   public boolean setView(GameView view)
+   {
+      if(view == null)
+         return false;
+               
+      this.view = view;
+      return true;
+      
+   }
+   
+   private Card cpuPlayCard(Card playersCard)
+   {
+      
+      if(playersCard == null)
+         return null;
+      
+      Hand cpuHand = model.getCpuHand();
+      int cardsInHand = cpuHand.getNumCards();
+      int cpuCardToPlay = -1;
+            
+      for (int i = 0; i < cardsInHand; i++)
+      {
+         if(cpuHand.inspectCard(i).getValue() > playersCard.getValue())
+            cpuCardToPlay = i;   
+      }
+      
+      if(cpuCardToPlay == -1)
+         cpuCardToPlay = 0;
+      
+      return cpuHand.playCard(cpuCardToPlay);
+      
+   }
+   
+   private Card cpuPlayCard()
+   {
+      
+      Hand cpuHand = model.getCpuHand();   
+      return cpuHand.playCard(); 
+      
+   }
+   
+   private Card humanPlayCard(int index)
+   {
+      
+      Hand humanHand = model.getHumanHand();   
+      return humanHand.playCard(index); 
+      
+   }
+   
+   private int flipCoin()
+   { 
+      return (int)(Math.random() * (2 - 0)); 
+   }
+   
+   private void progressToPlayRound(int firstPlayer)
+   {
+      view.clearUI();
+      
+      Hand cpuHand = model.getCpuHand();
+      Hand humanHand = model.getHumanHand();
+      
+      if(firstPlayer == 0)
+      {
+         Card card = cpuPlayCard();
+         model.setCpuPlayedCard(card);
+         view.showCpuPlayedCard(card, this.model.getCpuName());
+      }
+      
+      view.playRoundScreen("Select your card.", cpuHand, 
+            humanHand, this.model.getNumCardsPerHand());
+      
+      for(int i = 0; i < humanHand.getNumCards(); i++)
+         view.playersCardActionListener(i, new PlayCarControlListener(i));
+      
+      view.rePaintUI();
+   }
+   
+   private void progressToShowPlayedCards(String message)
+   {
+      view.clearUI();
+
+      view.roundOutcomeScreen(
+            message, 
+            model.getCpuHand(),
+            model.getCpuPlayedCard(),
+            model.getCpuName(),
+            model.getHumanHand(), 
+            model.getHumanPlayedCard(),
+            model.getHumanName(),
+            model.getNumCardsPerHand());
+      
+      view.nextRoundActionListener(new NextControlListener());
+      
+      view.rePaintUI();
+   }
+   
+   private void progressToEndScreen()
+   {
+      view.clearUI();
+      
+      String message = "";
+      int cpuScore = model.getCpuScore();
+      int humanScore = model.getHumanScore();
+      
+      if(cpuScore > humanScore)
+         message = "Sorry, you lost, the computer won more rounds.";
+      else if(cpuScore == humanScore)
+         message = "You Tied!";
+      else
+         message = "Congratulations you won more rounds than the computer!";
+      
+      view.gameOutcomeScreen(message);
+      view.endActionListener(new EndControlListener());
+      view.playAgainActionListener(new PlayAgainControlListener());
+      
+      view.rePaintUI();
+   }
+   
+   private String roundEvaluation()
+   {
+      String message = "";
+      Card cpuPlayedCard = model.getCpuPlayedCard();
+      Card humanPlayedCard = model.getHumanPlayedCard();
+      
+      if(cpuPlayedCard == null || humanPlayedCard == null)
+         return null;
+      
+      int cpuPlayedCardValue = GUICard.valueAsInt(cpuPlayedCard.getValue());
+      int playerCardValue = GUICard.valueAsInt(humanPlayedCard.getValue());
+      
+      if( cpuPlayedCardValue > playerCardValue)
+      {
+         message = "Sorry you lost this round.";
+         model.setFirstPlayer(0);
+         model.setCpuScore();
+      }else if(cpuPlayedCardValue == playerCardValue)
+      {
+         message = "This round was a wash!";
+      }else
+      {
+         message = "Congratulations! You won this round.";
+         model.setFirstPlayer(1);
+         model.setHumanScore();
+      }
+      
+      model.setCardsLeft();
+      return message;
+   }
+   
+   private class PlayCarControlListener implements ActionListener
+   {
+      
+      int index;
+      
+      public PlayCarControlListener(int index)
+      {
+         this.index = index;
+      }
+      
+      @Override
+      public void actionPerformed(ActionEvent e)
+      {
+         
+         if(model.getFirstPlayer() == 1)
+         {
+            Card card = cpuPlayCard();
+            model.setCpuPlayedCard(card);
+         }
+         
+         Card card = humanPlayCard(index);
+         model.setHumanPlayedCard(card);
+         
+         String message = roundEvaluation();
+         progressToShowPlayedCards(message);
+      }
+      
+   }
+   
+   private class NextControlListener implements ActionListener
+   {
+      
+      @Override
+      public void actionPerformed(ActionEvent e)
+      {
+         if(model.getCardsLeft() == 0)
+            progressToEndScreen();
+         else
+            progressToPlayRound(model.getFirstPlayer());
+      }
+      
+   }
+   
+   private class EndControlListener implements ActionListener
+   {
+      
+      @Override
+      public void actionPerformed(ActionEvent e)
+      {
+         System.exit(0);
+      }
+      
+   }
+   
+   private class PlayAgainControlListener implements ActionListener
+   {
+      
+      @Override
+      public void actionPerformed(ActionEvent e)
+      {
+         int cpuFinalScore = model.getCpuScore();
+         int humanFinalScore = model.getHumanScore();
+         
+         if(cpuFinalScore > humanFinalScore || 
+               cpuFinalScore == humanFinalScore)
+            model.setFirstPlayer(0);
+         else
+            model.setFirstPlayer(1);
+         
+         model.resetGame();
+         model.dealCards();
+         progressToPlayRound(model.getFirstPlayer());
+      }
+      
+   }
+   
 }
 /*------------------------------------------------------
  * end of GameControl
- *---------------------------------------------------- */
-
-/*------------------------------------------------------
- * class GameModel
- *---------------------------------------------------- */
-
-class GameModel
-{
-   public CardGameFramework highCardGame;
-
-   /*
-    * public helper method that creates/recreates a new game
-    * used to start a new game as well as play again when game is
-    * over
-    * */
-   public boolean initGame()
-   {
-
-      if(cardsPerHand == 0)
-         return false;
-
-      // insure any resets
-      cardsLeft = cardsPerHand;
-      cpuPlayedCard = null;
-      playersPlayedCard = null;
-
-      highCardGame = new CardGameFramework( 1, 0, 0, null, numOfPlayers,
-            cardsPerHand);
-      highCardGame.deal();
-      highCardGame.sortHands();
-      computerPlayer = new ComputerPlayer(highCardGame.getHand(0), "Computer");
-      humanPlayer = new Player(highCardGame.getHand(1), "Player 1");
-      createBoard(cardsPerHand, 2);
-      introUI();
-
-      return true;
-   }
-
-   public static boolean flipCoin()
-   {
-      int random = (int)(Math.random() * (2 - 0));
-
-      if (random == 0)
-         return true; //computer plays first;
-      return false; //human plays first
-   }
-
-   public static int getCardsPerHand()
-   {
-      return cardsPerHand;
-   }
-
-   public static int getCardsLeft()
-   {
-      return cardsLeft;
-   }
-}
-/*------------------------------------------------------
- * end of GameModel
- *---------------------------------------------------- */
-
-
-
-/*------------------------------------------------------
- * High Card Game
- *---------------------------------------------------- */
-
-//class HighCard
-//{
-//   private CardTable myCardTable;
-//   private CardGameFramework highCardGame;
-//   private Player humanPlayer;
-//   private ComputerPlayer computerPlayer;
-//   private Card playersPlayedCard;
-//   private Card cpuPlayedCard;
-//   private int numOfPlayers;
-//   private int cardsPerHand;
-//   private int cardsLeft;
-//   private boolean cpuPlaysFirst;
-//
-//   /*
-//    * default constructor, not particularly useful right now
-//    * but added to be complete.
-//    * */
-//   public HighCard()
-//   {
-//      this.computerPlayer = null;
-//      this.humanPlayer = null;
-//      this.cardsPerHand = 0;
-//      this.cardsLeft = 0;
-//      this.cpuPlaysFirst = false;
-//      this.cpuPlayedCard = null;
-//      this.playersPlayedCard = null;
-//      this.highCardGame = null;
-//   }
-//
-//   /*
-//    * Non-default constructor
-//    * takes in cards per hand and number of players
-//    * though for this iteration it is always two players
-//    * */
-//   public HighCard(int cardsPerHand, int numOfPlayers)
-//   {
-//      this.computerPlayer = null;
-//      this.humanPlayer = null;
-//      this.cardsPerHand = cardsPerHand;
-//      this.cardsLeft = cardsPerHand;
-//      this.numOfPlayers = numOfPlayers;
-//      this.cpuPlaysFirst = true;
-//      this.cpuPlayedCard = null;
-//      this.playersPlayedCard = null;
-//      this.highCardGame = null;
-//   }
-//
-//   /*
-//    * public helper method that creates/recreates a new game
-//    * used to start a new game as well as play again when game is
-//    * over
-//    * */
-//   public boolean initGame()
-//   {
-//
-//      if(cardsPerHand == 0)
-//         return false;
-//
-//      // insure any resets
-//      cardsLeft = cardsPerHand;
-//      cpuPlayedCard = null;
-//      playersPlayedCard = null;
-//
-//      highCardGame = new CardGameFramework( 1, 0, 0, null, numOfPlayers,
-//            cardsPerHand);
-//      highCardGame.deal();
-//      highCardGame.sortHands();
-//      computerPlayer = new ComputerPlayer(highCardGame.getHand(0), "Computer");
-//      humanPlayer = new Player(highCardGame.getHand(1), "Player 1");
-//      createBoard(cardsPerHand, 2);
-//      introUI();
-//
-//      return true;
-//   }
-//
-//
-//   /*
-//    * Helper method that validates the round played and what to do next
-//    * */
-//   private void validateRound()
-//   {
-//      String message = "";
-//      int cpuPlayedCardValue = GUICard.valueAsInt(cpuPlayedCard.getValue());
-//      int playerCardValue = GUICard.valueAsInt(playersPlayedCard.getValue());
-//
-//      if( cpuPlayedCardValue > playerCardValue)
-//      {
-//         message = "Sorry you lost this round.";
-//         computerPlayer.updateWinnings(cpuPlayedCard, playersPlayedCard);
-//         cpuPlaysFirst = true;
-//      }else if(cpuPlayedCardValue == playerCardValue)
-//      {
-//         message = "This round was a wash!";
-//      }else
-//      {
-//         message = "Congratulations! You won this round.";
-//         humanPlayer.updateWinnings(cpuPlayedCard, playersPlayedCard);
-//         cpuPlaysFirst = false;
-//      }
-//
-//      cardsLeft--;
-//      roundOutcomeUI(message);
-//   }
-//
-//   /*
-//    *UI View for the intro of the game. Asks user to flip the coin
-//    *to decide who goes first
-//    * */
-//   private void introUI()
-//   {
-//      clearUI();
-//      int k;
-//      JButton flipCoin = new JButton("Flip Coin");
-//      Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
-//
-//      // add blank card holders
-//      for(k = 0; k < cardsPerHand; k++)
-//      {
-//         myCardTable.pnlHumanHand.add(
-//               new JLabel(GUICard.getBlankCardIcon()));
-//         myCardTable.pnlComputerHand.add(
-//               new JLabel(GUICard.getBlankCardIcon()));
-//      }
-//
-//      myCardTable.pnlPlayAreaMessage.add(
-//            new JLabel("Flip to see who goes first:", JLabel.CENTER));
-//
-//      flipCoin.setCursor(cursor);
-//      flipCoin.addActionListener(new CoinFlip());
-//
-//      myCardTable.pnlPlayAreaMessage.add(flipCoin);
-//
-//      rePaintUI();
-//   }
-//
-//   /*
-//    * UI View for the end of the game
-//    * */
-//   private void endGameUI()
-//   {
-//      clearUI();
-//      int k;
-//      int cpuScore = computerPlayer.getScore() / 2;
-//      int playerScore = humanPlayer.getScore() / 2;
-//      JButton playAgain = new JButton("Play Again");
-//      JButton quit = new JButton("Quit");
-//      Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
-//      String winner = "";
-//
-//      // add blank card holders
-//      for(k = 0; k < cardsPerHand; k++)
-//      {
-//         myCardTable.pnlHumanHand.add(
-//               new JLabel(GUICard.getBlankCardIcon()));
-//         myCardTable.pnlComputerHand.add(
-//               new JLabel(GUICard.getBlankCardIcon()));
-//      }
-//
-//      myCardTable.pnlPlayAreaMessage.setLayout(new GridLayout(6, 1));
-//
-//      myCardTable.pnlPlayAreaMessage.add(
-//            new JLabel("Game Over", JLabel.CENTER));
-//
-//      myCardTable.pnlPlayAreaMessage.add(
-//            new JLabel(
-//                  computerPlayer.getName() + " won "  + cpuScore + " rounds",
-//                  JLabel.CENTER));
-//      myCardTable.pnlPlayAreaMessage.add(
-//            new JLabel(
-//                  humanPlayer.getName() + " won "  + playerScore + " rounds",
-//                  JLabel.CENTER));
-//
-//      if(playerScore > cpuScore)
-//         winner = "Congratulations! You won!";
-//      else if(playerScore == cpuScore)
-//         winner = "You tied with the the computer!";
-//      else
-//         winner = "Sorry, you lost the game.";
-//
-//      myCardTable.pnlPlayAreaMessage.add(new JLabel(winner, JLabel.CENTER));
-//
-//      playAgain.setCursor(cursor);
-//      quit.setCursor(cursor);
-//      playAgain.addActionListener(new PlayAgain());
-//      quit.addActionListener(new EndGame());
-//
-//      myCardTable.pnlPlayAreaMessage.add(playAgain);
-//      myCardTable.pnlPlayAreaMessage.add(quit);
-//
-//      rePaintUI();
-//   }
-//
-//   /*
-//    * UI screen for playing a round
-//    * */
-//   private void playRoundUI()
-//   {
-//      // game is over
-//      if(cardsLeft == 0)
-//      {
-//         endGameUI();
-//         return;
-//      }
-//
-//      clearUI();
-//      int k;
-//      String message = "";
-//      Hand humanHand = humanPlayer.getHand();
-//      Hand cpuHand = computerPlayer.getHand();
-//      Border emptyBorder = BorderFactory.createEmptyBorder();
-//      Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
-//
-//      // players cards as buttons
-//      for(k = 0; k < cardsPerHand; k++)
-//      {
-//         if(k > cardsLeft - 1)
-//         {
-//            // blanks for played cards
-//            myCardTable.pnlHumanHand.add(
-//                  new JLabel(GUICard.getBlankCardIcon()));
-//         }else
-//         {
-//            JButton playCardBtn = new JButton(
-//                  GUICard.getIcon(humanHand.inspectCard(k)));
-//            playCardBtn.setBorder(emptyBorder);
-//            playCardBtn.setCursor(cursor);
-//            playCardBtn.addActionListener(new PlayCardListener(k));
-//            myCardTable.pnlHumanHand.add(playCardBtn);
-//         }
-//      }
-//
-//      if(cpuPlaysFirst)
-//      {
-//         // cpu is first. play there card and show it
-//         cpuPlayedCard = computerPlayer.playCard();
-//         myCardTable.pnlPlayAreaComputer.add(
-//               new JLabel(GUICard.getIcon(cpuPlayedCard)));
-//         myCardTable.pnlPlayAreaComputer.add(
-//               new JLabel(computerPlayer.getName(), JLabel.CENTER));
-//
-//         message = "Your turn to play. Select your card.";
-//      }else
-//         message = "You play first. Select your card.";
-//
-//      // add the center play table message
-//      myCardTable.pnlPlayAreaMessage.add(new JLabel(message, JLabel.CENTER));
-//
-//      // add cpu cards separately in case they played first
-//      for(k = 0; k < cardsPerHand; k++)
-//      {
-//         if(k > cpuHand.getNumCards() -1)
-//         {
-//            myCardTable.pnlComputerHand.add(
-//                  new JLabel(GUICard.getBlankCardIcon()));
-//         }else
-//         {
-//            // computers hand
-//            myCardTable.pnlComputerHand.add(
-//                  new JLabel(GUICard.getBackCardIcon()));
-//         }
-//      }
-//
-//      rePaintUI();
-//   }
-//
-//
-//   /*
-//    * UI View for showing the outcome of the round
-//    * */
-//   private void roundOutcomeUI(String message)
-//   {
-//      clearUI();
-//
-//      int k = 0;
-//      Hand humanHand = humanPlayer.getHand();
-//      Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
-//
-//      for(k = 0; k < cardsPerHand; k++)
-//      {
-//
-//         if(k > cardsLeft - 1)
-//         {
-//            // add blank cards as placeholders
-//            myCardTable.pnlComputerHand.add(
-//                  new JLabel(GUICard.getBlankCardIcon()));
-//            myCardTable.pnlHumanHand.add(
-//                  new JLabel(GUICard.getBlankCardIcon()));
-//         }else
-//         {
-//            // add computers hand
-//            myCardTable.pnlComputerHand.add(
-//                  new JLabel(GUICard.getBackCardIcon()));
-//            // add players hand as static
-//            myCardTable.pnlHumanHand.add(
-//                  new JLabel(GUICard.getIcon(humanHand.inspectCard(k))));
-//         }
-//      }
-//
-//      myCardTable.pnlPlayAreaComputer.add(
-//            new JLabel(GUICard.getIcon(cpuPlayedCard)));
-//      myCardTable.pnlPlayAreaComputer.add(
-//            new JLabel(computerPlayer.getName(), JLabel.CENTER));
-//      myCardTable.pnlPlayAreaHuman.add(
-//            new JLabel(GUICard.getIcon(playersPlayedCard)));
-//      myCardTable.pnlPlayAreaHuman.add(
-//            new JLabel(humanPlayer.getName(), JLabel.CENTER));
-//
-//      JButton nextRoundBtn = new JButton("Next Round");
-//      nextRoundBtn.addActionListener(new AdvanceRound());
-//      nextRoundBtn.setCursor(cursor);
-//
-//      myCardTable.pnlPlayAreaMessage.add(new JLabel(message, JLabel.CENTER));
-//      myCardTable.pnlPlayAreaMessage.add(nextRoundBtn);
-//
-//      rePaintUI();
-//   }
-//
-//
-//   /*
-//    * private helper method that clears the relevant panels for the next
-//    * UI screen to be painted
-//    * */
-//   private void clearUI()
-//   {
-//      myCardTable.pnlComputerHand.removeAll();
-//      myCardTable.pnlHumanHand.removeAll();
-//      myCardTable.pnlPlayAreaComputer.removeAll();
-//      myCardTable.pnlPlayAreaHuman.removeAll();
-//      myCardTable.pnlPlayAreaMessage.removeAll();
-//   }
-//
-//
-//   /*
-//    * private helper method to repaint the UI
-//    * */
-//   private void rePaintUI()
-//   {
-//      myCardTable.getContentPane().validate();
-//      myCardTable.getContentPane().repaint();
-//   }
-//
-//   /*
-//    * private helper method to initiate the playing board
-//    * */
-//   private void createBoard(int cardsPerHand, int numOfPlayers)
-//   {
-//      myCardTable
-//      = new CardTable("CardTable", cardsPerHand, numOfPlayers);
-//      myCardTable.setSize(800, 600);
-//      myCardTable.setLocationRelativeTo(null);
-//      myCardTable.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//      myCardTable.setVisible(true);
-//   }
-//
-//   /*
-//    * Action listener for advancing a round
-//    * */
-//   private class AdvanceRound implements ActionListener
-//   {
-//
-//      @Override
-//      public void actionPerformed(ActionEvent e)
-//      {
-//         playRoundUI();
-//      }
-//
-//   }
-//
-//   /*
-//    * Action listener for kicking off a new game
-//    * */
-//   private class PlayAgain implements ActionListener
-//   {
-//
-//      @Override
-//      public void actionPerformed(ActionEvent e)
-//      {
-//         initGame();
-//      }
-//
-//   }
-//
-//   /*
-//    * Action listener for flipping a virtual coin
-//    * */
-//   private class CoinFlip implements ActionListener
-//   {
-//
-//      @Override
-//      public void actionPerformed(ActionEvent e)
-//      {
-//         int random = (int)(Math.random() * (2 - 0));
-//         JButton begin = new JButton("Start Game");
-//         Cursor cursor = new Cursor(Cursor.HAND_CURSOR);
-//
-//         myCardTable.pnlPlayAreaMessage.removeAll();
-//
-//         if(random == 0)
-//         {
-//            cpuPlaysFirst = true;
-//            myCardTable.pnlPlayAreaMessage.add(
-//                  new JLabel("Computer Goes First", JLabel.CENTER));
-//         }
-//         else
-//         {
-//            cpuPlaysFirst = false;
-//            myCardTable.pnlPlayAreaMessage.add(
-//                  new JLabel("You Go First", JLabel.CENTER));
-//         }
-//
-//         begin.setCursor(cursor);
-//         begin.addActionListener(new BeginGame());
-//         myCardTable.pnlPlayAreaMessage.add(begin);
-//
-//         rePaintUI();
-//
-//      }
-//
-//   }
-//
-//   /*
-//    * Action listener for begining the game. Kicks into the playRoundUI
-//    * */
-//   private class BeginGame implements ActionListener
-//   {
-//
-//      @Override
-//      public void actionPerformed(ActionEvent e)
-//      {
-//         playRoundUI();
-//      }
-//
-//   }
-//
-//
-//   /*
-//    * Action listener for shutting down the app
-//    * */
-//   private class EndGame implements ActionListener
-//   {
-//
-//      @Override
-//      public void actionPerformed(ActionEvent e)
-//      {
-//         System.exit(0);
-//      }
-//
-//   }
-//
-//   /*
-//    * Action listener for when the user plays a card.
-//    * */
-//   private class PlayCardListener implements ActionListener
-//   {
-//      private int cardIndex;
-//
-//      public PlayCardListener(int cardIndex)
-//      {
-//         this.cardIndex = cardIndex;
-//      }
-//
-//      @Override
-//      public void actionPerformed(ActionEvent e)
-//      {
-//
-//         playersPlayedCard = humanPlayer.playCard(cardIndex);
-//
-//         if(!cpuPlaysFirst)
-//            cpuPlayedCard = computerPlayer.playCard(playersPlayedCard);
-//
-//         validateRound();
-//
-//      }
-//
-//   }
-//
-//}
-
-/*------------------------------------------------------
- * end High Card Game
- *---------------------------------------------------- */
-
-/*------------------------------------------------------
- *class Player
- *---------------------------------------------------- */
-
-/*
- * a sinple class to handle some of the logic regarding a player of the game
- * */
-//class Player
-//{
-//
-//   protected Hand hand;
-//   protected int score;
-//   protected String playerName;
-//   protected Card[] winnings;
-//
-//   /*
-//    * default constructor
-//    * */
-//   Player()
-//   {
-//      hand = null;
-//      score = 0;
-//      playerName = "";
-//      winnings = null;
-//   }
-//
-//   /*
-//    * non-default constructor. takes a Hand and a name for the player
-//    * */
-//   Player(Hand hand, String name)
-//   {
-//      this.hand = hand;
-//      score = 0;
-//      setName(name);
-//      winnings = new Card[hand.getNumCards() * 2];
-//   }
-//
-//   /*
-//    * getter for obtaining the score of the player
-//    * */
-//   public int getScore()
-//   {
-//      return score;
-//   }
-//
-//   /*
-//    * setter method for setting the score of the player
-//    * */
-//   public void updateScore()
-//   {
-//      score += 2;
-//   }
-//
-//   /*
-//    * updates the winnings array of the player.
-//    * Not used much in our implimentation but here for completeness
-//    * */
-//   public void updateWinnings(Card winningCardOne, Card winningCardTwo)
-//   {
-//      winnings[score] = new Card(winningCardOne.getValue(),
-//            winningCardOne.getSuit());
-//      winnings[score + 1] = new Card(winningCardOne.getValue(),
-//            winningCardOne.getSuit());
-//      updateScore();
-//   }
-//
-//   /*
-//    * getter to get the winnings array
-//    * */
-//   public Card[] getWinnings()
-//   {
-//      return winnings;
-//   }
-//
-//   /*
-//    * getter to get the actual hand of the player.
-//    * useful to interact with Hand methods
-//    * */
-//   public Hand getHand()
-//   {
-//      return hand;
-//   }
-//
-//   /*
-//    * Play a cord by index. After card is played the hand is decremented by
-//    * one and shifted
-//    * */
-//   public Card playCard(int index)
-//   {
-//      return hand.playCard(index);
-//   }
-//
-//   /*
-//    * getter for player name
-//    * */
-//   public String getName()
-//   {
-//      return playerName;
-//   }
-//
-//   /*
-//    * setter for player name
-//    * */
-//   public boolean setName(String name)
-//   {
-//      if (name == "")
-//         return false;
-//      playerName = name;
-//      return true;
-//   }
-//}
-
-/*------------------------------------------------------
- * end class Player
- *---------------------------------------------------- */
-
-/*------------------------------------------------------
- *class ComputerPlayer
- *---------------------------------------------------- */
-
-/*
- * conputerPlayer and extends player. Only difference is Computer player
- * will handle the logic on which card to play, instead of reacting to a
- * listener
- * */
-//class ComputerPlayer extends Player
-//{
-//
-//   ComputerPlayer()
-//   {
-//      super();
-//   }
-//
-//   ComputerPlayer(Hand hand, String name)
-//   {
-//      super(hand, name);
-//   }
-//
-//   /*
-//    * plays card based on the opponents card, if it can beat the opponent
-//    * it plays the lowest card that beats it, if it can't it plays the lowest
-//    * card in hand
-//    * */
-//   public Card playCard(Card opponentCard)
-//   {
-//
-//      int winningCardIndex = 0;
-//
-//      for (int i = 0; i < hand.getNumCards(); i++)
-//      {
-//         if (hand.inspectCard(i).getValue() > opponentCard.getValue())
-//            winningCardIndex = i;
-//
-//         if (hand.inspectCard(i).getValue() <
-//               hand.inspectCard(winningCardIndex).getValue() &&
-//               hand.inspectCard(i).getValue() > opponentCard.getValue())
-//            winningCardIndex = i;
-//      }
-//
-//      return hand.playCard(winningCardIndex);
-//   }
-//
-//   /*
-//    * plays the highest card in hand
-//    * */
-//   public Card playCard()
-//   {
-//      return hand.playCard();
-//   }
-//
-//
-//}
-
-/*------------------------------------------------------
- * end class ComputerPlayer
- *---------------------------------------------------- */
-
-/*------------------------------------------------------
- * CardTable
- *---------------------------------------------------- */
-
-//class CardTable extends JFrame
-//{
-//   public static int MAX_CARDS_PER_HAND = 56;
-//   public static int MAX_PLAYERS = 2;
-//
-//   private static String[] pnlTitle = {"Computer Hand", "Playing Area",
-//      "Player Hand"};
-//   private int numCardsPerHand, numPlayers;
-//   public JPanel pnlComputerHand, pnlHumanHand, pnlPlayArea, pnlPlayAreaCards,
-//      pnlPlayAreaMessage, pnlPlayAreaComputer, pnlPlayAreaHuman;
-//
-//   /*
-//    * default constructor for a card table
-//    * */
-//   public CardTable(String title, int numCardsPerHand, int numPlayers)
-//   {
-//      super();
-//      setTitle(title);
-//      setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-//      setLayout(new BorderLayout());
-//
-//      this.pnlComputerHand = new JPanel();
-//      this.pnlComputerHand.setBorder(
-//            BorderFactory.createTitledBorder(pnlTitle[0]));
-//      this.pnlComputerHand.setLayout(new GridLayout(1, 7));
-//
-//      this.pnlPlayArea = new JPanel();
-//      this.pnlPlayAreaCards = new JPanel();
-//      this.pnlPlayAreaComputer = new JPanel();
-//      this.pnlPlayAreaHuman = new JPanel();
-//      this.pnlPlayAreaMessage = new JPanel();
-//
-//      this.pnlPlayArea.setBorder(
-//            BorderFactory.createTitledBorder(pnlTitle[1]));
-//      this.pnlPlayArea.setLayout(new BoxLayout(this.pnlPlayArea,
-//            BoxLayout.Y_AXIS));
-//      this.pnlPlayAreaCards.setLayout(new FlowLayout());
-//      this.pnlPlayAreaComputer.setLayout(new BoxLayout(this.pnlPlayAreaComputer,
-//            BoxLayout.Y_AXIS));
-//      this.pnlPlayAreaHuman.setLayout(new BoxLayout(this.pnlPlayAreaHuman,
-//            BoxLayout.Y_AXIS));
-//      this.pnlPlayAreaCards.add(this.pnlPlayAreaComputer);
-//      this.pnlPlayAreaCards.add(this.pnlPlayAreaHuman);
-//      this.pnlPlayArea.add(this.pnlPlayAreaCards);
-//      this.pnlPlayArea.add(this.pnlPlayAreaMessage);
-//
-//      this.pnlHumanHand = new JPanel();
-//      this.pnlHumanHand.setBorder(
-//            BorderFactory.createTitledBorder(pnlTitle[2]));
-//      this.pnlHumanHand.setLayout(new GridLayout(1, 7));
-//
-//
-//      add(pnlComputerHand, BorderLayout.NORTH);
-//      add(pnlPlayArea, BorderLayout.CENTER);
-//      add(pnlHumanHand, BorderLayout.SOUTH);
-//   }
-//
-//   /*
-//    * get number of cards per hand
-//    * */
-//   public int getNumCardsPerHand()
-//   {
-//      return numCardsPerHand;
-//   }
-//
-//   /*
-//    * get number of players
-//    * */
-//   public int getNumPlayers()
-//   {
-//      return numPlayers;
-//   }//end accessors
-//
-//}
-/*------------------------------------------------------
- * end of CardTable
- *---------------------------------------------------- */
+// *---------------------------------------------------- */
 
 
 /*------------------------------------------------------
@@ -1349,6 +866,18 @@ class GUICard
 /*------------------------------------------------------
  * end GUICard
  *---------------------------------------------------- */
+
+
+
+/*
+ * 
+ * 
+ * From here down is all the classes that represent objects
+ * used by the model to create it's data. Card, Hand, Deck,
+ * etc.
+ * 
+ * 
+ * */
 
 
 /*------------------------------------------------------
@@ -1497,7 +1026,7 @@ class Card
       }
 
    }//end method arraySort
-
+   
 }
 /*------------------------------------------------------
  * end of Card
@@ -1955,6 +1484,8 @@ class CardGameFramework
       return hand[k];
    }
 
+   public int geNumCardsPerHand() { return numCardsPerHand; }
+   
    public Card getCardFromDeck() { return deck.dealCard(); }
 
    public int getNumCardsRemainingInDeck() { return deck.getNumCards(); }
@@ -2017,7 +1548,7 @@ class CardGameFramework
          hand[k].sort();
    }
 
-   Card playCard(int playerIndex, int cardIndex)
+   public Card playCard(int playerIndex, int cardIndex)
    {
       // returns bad card if either argument is bad
       if (playerIndex < 0 ||  playerIndex > numPlayers - 1 || 
@@ -2033,7 +1564,7 @@ class CardGameFramework
    }
    
    
-   boolean takeCard(int playerIndex, int cardIndex)
+   public boolean takeCard(int playerIndex, int cardIndex)
    {
       // returns false if either argument is bad
       if (playerIndex < 0 ||  playerIndex > numPlayers - 1 ||
